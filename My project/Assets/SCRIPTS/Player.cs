@@ -9,12 +9,12 @@ public class Player : MonoBehaviour
     public float speed;
     public float smoothRotTime;
     private float turnSmoothVelocity;
-
+    private Transform cam;
     // Start is called before the first frame update
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        
+        cam = Camera.main.transform;
         
     }
 
@@ -28,9 +28,11 @@ public class Player : MonoBehaviour
 
         if (direction.magnitude > 0)
         {
-            float angle = MathF.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
-            float smoothAngçe = Mathf.SmoothDampAngle(transform.eulerAngles.y, angle, ref turnSmoothVelocity, smoothRotTime);
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            float angle = MathF.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
+            float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, angle, ref turnSmoothVelocity, smoothRotTime);
+            transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
+            Vector3 moveDirection = Quaternion.Euler(0f, smoothAngle, 0f) * Vector3.forward;
+            
             controller.Move(direction * speed * Time.deltaTime);
         }
     }
