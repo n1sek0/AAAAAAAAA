@@ -4,11 +4,16 @@ using UnityEngine;
 using UnityEngine.AI;
 public class Enemy : MonoBehaviour
 {
+    public float attackCooldown = 2f; // Tempo de espera entre os ataques
+    private float attackTimer = 0f; // Temporizador para controlar o tempo entre os ataques
+    private GameObject player; // Referência ao jogador
+
     public NavMeshAgent navMeshAgent;               //  Nav mesh agent component
     public float startWaitTime = 4;                 //  Wait time of every action
     public float timeToRotate = 2;                  //  Wait time when the enemy detect near the player without seeing
     public float speedWalk = 6;                     //  Walking speed, speed in the nav mesh agent
     public float speedRun = 9;                      //  Running speed
+    public Animator animator;
     
     [SerializeField] public float health = 10f;
     
@@ -36,6 +41,10 @@ public class Enemy : MonoBehaviour
  
     void Start()
     {
+        m_WaitTime = startWaitTime;
+        animator = GetComponent<Animator>();
+        player = GameObject.FindGameObjectWithTag("Player");
+        
         m_PlayerPosition = Vector3.zero;
         m_IsPatrol = true;
         m_CaughtPlayer = false;
@@ -54,7 +63,14 @@ public class Enemy : MonoBehaviour
  
     private void Update()
     {
-            EnviromentView();                       //  Check whether or not the player is in the enemy's field of vision
+        // Verificar se o inimigo está se movendo
+        bool isMoving = navMeshAgent.velocity.magnitude > 0;
+
+        // Atualizar o parâmetro "transition" no Animator
+        animator.SetInteger("transition", isMoving ? 1 : 0);
+        
+        
+        EnviromentView();                       //  Check whether or not the player is in the enemy's field of vision
  
         if (!m_IsPatrol)
         {
@@ -202,7 +218,6 @@ public class Enemy : MonoBehaviour
             }
         }
     }
- 
     void EnviromentView()
     {
         Collider[] playerInRange = Physics.OverlapSphere(transform.position, viewRadius, playerMask);   //  Make an overlap sphere around the enemy to detect the playermask in the view radius
