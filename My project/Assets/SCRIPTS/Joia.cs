@@ -13,6 +13,7 @@ public class Joia : MonoBehaviour
         {
             playerInventory.DiamondCollected();
             gameObject.SetActive(false);
+            
         }
         
         

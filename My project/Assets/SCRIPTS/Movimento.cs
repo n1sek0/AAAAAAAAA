@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Movimento : MonoBehaviour
 {
@@ -11,20 +12,34 @@ public class Movimento : MonoBehaviour
     [SerializeField] private float gravityForce = 8;
     [SerializeField] private float jumpForce = 8;
     [SerializeField] private float jumpAttackDamage = 10f;
+    [SerializeField] private float knockbackForce = 10f; // Força do knockback
     private bool isJumping;
 
+    [SerializeField] private AudioSource backgroundMusic;
+    [SerializeField] private AudioSource jumpSound;
+    [SerializeField] private AudioSource jewelSound;
+    [SerializeField] private AudioSource walkingSound;
+
     private float velocity = 3f;
+    private int playerHealth = 20;
 
     // Start is called before the first frame update
     void Start()
     {
         character = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        backgroundMusic.Play();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (playerHealth <= 0)
+        {
+            ResetScene();
+            return;
+        }
+
         Vector3 movement = Vector3.zero;
 
         if (!character.isGrounded)
@@ -37,6 +52,7 @@ public class Movimento : MonoBehaviour
             directionY = jumpForce;
             animator.SetBool("jumping", true);
             isJumping = true;
+            jumpSound.Play();
         }
         else if (character.isGrounded)
         {
@@ -55,10 +71,15 @@ public class Movimento : MonoBehaviour
         {
             animator.SetBool("running", true);
             transform.forward = inputs;
+            if (!walkingSound.isPlaying && !isJumping)
+            {
+                walkingSound.Play();
+            }
         }
         else
         {
             animator.SetBool("running", false);
+            walkingSound.Stop();
         }
     }
 
@@ -70,7 +91,29 @@ public class Movimento : MonoBehaviour
             if (enemy != null)
             {
                 enemy.TakeDamage(jumpAttackDamage);
+                playerHealth -= 10; // Reduz a vida do player ao atacar o inimigo
+
+                // Aplica o knockback no jogador
+                Rigidbody rb = GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    Vector3 knockbackDirection = (transform.position - hit.gameObject.transform.position).normalized;
+                    rb.AddForce(knockbackDirection * knockbackForce, ForceMode.Impulse);
+                }
             }
         }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Joia"))
+        {
+            jewelSound.Play();
+        }
+    }
+
+    private void ResetScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
